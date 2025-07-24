@@ -78,4 +78,15 @@ router.get("/uid/:uid", async (req, res) => {
   }
 });
 
+// GET all students
+router.get("/", async (req, res) => {
+  try {
+    const students = await Student.find().sort({ createdAt: -1 }); // latest first
+    res.json(students);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 module.exports = router;
