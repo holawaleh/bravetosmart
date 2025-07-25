@@ -1,7 +1,9 @@
+// /middleware/auth.js
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-const authMiddleware = async (req, res, next) => {
+// 1. Token Verification
+const verifyToken = async (req, res, next) => {
   const token = req.header("Authorization")?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
@@ -14,4 +16,14 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = authMiddleware;
+// 2. Role Permission Checker
+const permit = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden: Insufficient permission" });
+    }
+    next();
+  };
+};
+
+module.exports = { verifyToken, permit };

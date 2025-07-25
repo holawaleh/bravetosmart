@@ -10,6 +10,10 @@ const subjectRoutes = require("./routes/SubjectRoutes");
 
 const authRoutes = require("./routes/authRoutes");
 
+const logRoutes = require("./routes/logRoutes");
+app.use("/api/logs", logRoutes);
+
+
 dotenv.config(); // this loads .env variables like MONGO_URI
 
 connectDB(); // connect to MongoDB Atlas
