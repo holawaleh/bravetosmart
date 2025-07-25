@@ -8,11 +8,15 @@ const studentRoutes = require("./routes/studentRoutes"); // import student route
 
 const subjectRoutes = require("./routes/SubjectRoutes");
 
+const authRoutes = require("./routes/authRoutes");
+
 dotenv.config(); // this loads .env variables like MONGO_URI
 
 connectDB(); // connect to MongoDB Atlas
 
 const app = express(); // create the server app
+
+app.use("/api/auth", authRoutes);
 
 app.use(cors()); // allow frontend to communicate with backend
 app.use(express.json()); // allow server to read JSON data from POST requests
