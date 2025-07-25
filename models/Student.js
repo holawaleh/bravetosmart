@@ -32,7 +32,14 @@ const studentSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true
+  },
+  subjects: [
+  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Subject"
   }
+],
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("Student", studentSchema);
