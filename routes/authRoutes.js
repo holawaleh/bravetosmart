@@ -22,6 +22,7 @@ router.post("/register", verifyToken, permit("superadmin"), async (req, res) => 
 });
 
 // 🔐 Login (Open to all)
+// 🔐 Login (Open to all) - COMPLETE UPDATED VERSION
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -31,7 +32,12 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    // ✅ FIXED: Include role in JWT token
+    const token = jwt.sign({ 
+      id: user._id, 
+      role: user.role  // This was added to fix the 403 error
+    }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    
     res.json({
       token,
       user: {
@@ -44,6 +50,8 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: "Login failed", error: err.message });
   }
 });
+
+// Keep all your other routes (register, delete admin) unchanged
 
 // 🔐 Delete admin (Only superadmin can remove admins)
 router.delete("/admin/:id", verifyToken, permit("superadmin"), async (req, res) => {
