@@ -3,28 +3,25 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/db");
 
-// Route imports
-const studentRoutes = require("./routes/studentRoutes");
-const subjectRoutes = require("./routes/SubjectRoutes");
-const authRoutes = require("./routes/authRoutes");
-const logRoutes = require("./routes/logRoutes");
-
-dotenv.config(); // Load .env variables
-connectDB(); // Connect to MongoDB
+// Load env vars
+dotenv.config();
+connectDB();
 
 const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json()); // Important: put this before routes to parse JSON
+app.use(express.json());
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/students", studentRoutes);
-app.use("/api/subjects", subjectRoutes);
-app.use("/api/logs", logRoutes);
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/subjects", require("./routes/SubjectRoutes"));
+app.use("/api/logs", require("./routes/logRoutes"));
 
-// Root route (optional)
+// ✅ Mount student routes directly under /api
+app.use("/api", require("./routes/studentRoutes")); // All student endpoints live under /api
+
+// Root route
 app.get("/", (req, res) => {
   res.send("🚀 Backend API is live!");
 });
