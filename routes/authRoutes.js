@@ -50,7 +50,7 @@ router.post("/login", async (req, res) => {
     // ✅ Log login event
     await Log.create({
       user: user._id,
-      action: "Login",
+      action: "login",
       details: `User '${user.username}' logged in`
     });
 
