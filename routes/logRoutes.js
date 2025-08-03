@@ -119,4 +119,31 @@ router.post("/test", authMiddleware, async (req, res) => {
   }
 });
 
+// ✅ Create a test scan log manually
+router.post("/create", authMiddleware, async (req, res) => {
+  try {
+    const { studentId, subject, uid } = req.body;
+
+    if (!studentId || !subject || !uid) {
+      return res.status(400).json({ success: false, message: "Missing studentId, subject, or uid" });
+    }
+
+    const log = await Log.create({
+      user: req.user?.id,
+      student: studentId,
+      subject,
+      uid,
+      action: "entry",
+      status: "success",
+      details: `Manual scan log created for ${subject}`,
+      ip: req.headers["x-forwarded-for"] || req.connection.remoteAddress
+    });
+
+    res.status(201).json({ success: true, data: log });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Log creation failed", error: err.message });
+  }
+});
+
+
 module.exports = router;
