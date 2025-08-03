@@ -98,4 +98,23 @@ router.get("/summary", authMiddleware, roleMiddleware(["admin", "superadmin"]), 
   }
 });
 
+// 🔧 TEMPORARY: Create a log manually
+router.post("/test", authMiddleware, async (req, res) => {
+  try {
+    const log = await Log.create({
+      user: req.user?.id,
+      action: "test-log",
+      status: "success",
+      details: "Manually created test log from /api/logs/test",
+      ip: req.headers["x-forwarded-for"] || req.connection.remoteAddress
+    });
+
+    res.status(201).json(log);
+  } catch (err) {
+    console.error("Log creation error:", err.message);
+    res.status(500).json({ message: "Failed to create test log", error: err.message });
+  }
+});
+
+
 module.exports = router;
