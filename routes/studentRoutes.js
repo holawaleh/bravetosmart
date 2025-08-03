@@ -1,27 +1,39 @@
 const express = require("express");
 const router = express.Router();
 const Student = require("../models/Student");
+const Log = require("../models/Log"); // ⬅️ Import Log model
 
 let lastUID = ""; // store the most recent UID scanned by the device
 
 // 1️⃣ IoT device sends UID after scan
-router.post("/capture-uid", (req, res) => {
+router.post("/capture-uid", async (req, res) => {
   const { uid } = req.body;
 
   if (!uid) {
     return res.status(400).json({ message: "UID is required" });
   }
 
-  lastUID = uid; // store the UID temporarily
+  lastUID = uid;
   console.log("UID captured from device:", uid);
+
+  await Log.create({
+    action: "UID Capture",
+    details: `UID ${uid} was captured from RFID device.`,
+  });
+
   res.status(200).json({ message: "UID captured successfully", uid });
 });
 
 // 2️⃣ Frontend fetches last scanned UID
-router.get("/get-latest-uid", (req, res) => {
+router.get("/get-latest-uid", async (req, res) => {
   if (!lastUID) {
     return res.status(404).json({ message: "No UID scanned yet" });
   }
+
+  await Log.create({
+    action: "UID Fetch",
+    details: `Frontend requested latest scanned UID: ${lastUID}`,
+  });
 
   res.json({ uid: lastUID });
 });
@@ -33,15 +45,22 @@ router.post("/register", async (req, res) => {
     const uid = lastUID;
 
     if (!uid) {
+      await Log.create({
+        action: "Registration Denied",
+        details: `Attempted registration denied: No UID scanned`,
+      });
       return res.status(400).json({ message: "No UID scanned. Please scan RFID first." });
     }
 
-    // Check if UID, matricNo, or email already exists
     const exists = await Student.findOne({
       $or: [{ matricNo }, { email }, { uid }]
     });
 
     if (exists) {
+      await Log.create({
+        action: "Registration Denied",
+        details: `Registration failed: UID ${uid}, MatricNo ${matricNo}, or Email ${email} already exists.`,
+      });
       return res.status(400).json({ message: "Student already exists with same UID, matricNo, or email" });
     }
 
@@ -57,8 +76,13 @@ router.post("/register", async (req, res) => {
 
     await newStudent.save();
 
-    // Reset lastUID to prevent accidental reuse
-    lastUID = "";
+    await Log.create({
+      user: newStudent._id,
+      action: "Student Registered",
+      details: `New student registered: ${name} (${matricNo})`,
+    });
+
+    lastUID = ""; // clear after successful registration
 
     res.status(201).json({ message: "Student registered successfully", student: newStudent });
   } catch (err) {
@@ -67,11 +91,24 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// 🔍 Optional: Get student by UID (e.g. for login)
+// 🔍 Optional: Get student by UID
 router.get("/uid/:uid", async (req, res) => {
   try {
     const student = await Student.findOne({ uid: req.params.uid });
-    if (!student) return res.status(404).json({ message: "Student not found" });
+    if (!student) {
+      await Log.create({
+        action: "UID Lookup Failed",
+        details: `No student found with UID ${req.params.uid}`,
+      });
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    await Log.create({
+      user: student._id,
+      action: "UID Lookup Success",
+      details: `Student with UID ${req.params.uid} found: ${student.name}`,
+    });
+
     res.json(student);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -81,7 +118,13 @@ router.get("/uid/:uid", async (req, res) => {
 // GET all students
 router.get("/", async (req, res) => {
   try {
-    const students = await Student.find().sort({ createdAt: -1 }); // latest first
+    const students = await Student.find().sort({ createdAt: -1 });
+
+    await Log.create({
+      action: "Fetch Students",
+      details: `Fetched all students (${students.length})`,
+    });
+
     res.json(students);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -91,6 +134,3 @@ router.get("/", async (req, res) => {
 router.get("/test", (req, res) => {
   res.json({ message: "Test route working!" });
 });
-
-
-module.exports = router;

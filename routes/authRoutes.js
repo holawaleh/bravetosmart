@@ -2,6 +2,8 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Log = require("../models/Log"); // ✅ added
+
 const { verifyToken, permit } = require("../middleware/auth");
 
 const router = express.Router();
@@ -15,6 +17,14 @@ router.post("/register", verifyToken, permit("superadmin"), async (req, res) => 
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await User.create({ username, password: hashedPassword, role });
+
+    // ✅ Log this action
+    await Log.create({
+      user: req.user.id,
+      action: "Admin Registered",
+      details: `Superadmin created admin '${username}' with role '${role}'`
+    });
+
     res.status(201).json({ message: "User registered", user: newUser });
   } catch (err) {
     res.status(500).json({ message: "Registration failed", error: err.message });
@@ -22,7 +32,6 @@ router.post("/register", verifyToken, permit("superadmin"), async (req, res) => 
 });
 
 // 🔐 Login (Open to all)
-// 🔐 Login (Open to all) - COMPLETE UPDATED VERSION
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -32,12 +41,19 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // ✅ FIXED: Include role in JWT token
-    const token = jwt.sign({ 
-      id: user._id, 
-      role: user.role  // This was added to fix the 403 error
-    }, process.env.JWT_SECRET, { expiresIn: "1d" });
-    
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    // ✅ Log login event
+    await Log.create({
+      user: user._id,
+      action: "Login",
+      details: `User '${user.username}' logged in`
+    });
+
     res.json({
       token,
       user: {
@@ -51,12 +67,18 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Keep all your other routes (register, delete admin) unchanged
-
-// 🔐 Delete admin (Only superadmin can remove admins)
+// ❌ Delete admin (Only superadmin)
 router.delete("/admin/:id", verifyToken, permit("superadmin"), async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
+    const deleted = await User.findByIdAndDelete(req.params.id);
+
+    // ✅ Log deletion
+    await Log.create({
+      user: req.user.id,
+      action: "Admin Deleted",
+      details: `Superadmin deleted admin '${deleted?.username}'`
+    });
+
     res.json({ message: "Admin removed" });
   } catch (err) {
     res.status(500).json({ message: "Failed to delete", error: err.message });
