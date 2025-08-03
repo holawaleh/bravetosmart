@@ -1,3 +1,4 @@
+// models/Log.js
 const mongoose = require("mongoose");
 
 const logSchema = new mongoose.Schema(
@@ -14,14 +15,26 @@ const logSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
-  "scan", "register", "deny", "edit", "delete", "login", "logout",
-  "assign-subject", "unassign-subject", "subject-create", "subject-fetch",
-  "uid-fetch", "uid-capture", "student-fetch", "student-lookup", "student-update",
-  "student-delete", "student-create", "student-assign", "student-unassign",
-  "student-verify", "student-verify-fail", "student-verify-success", "student-verify-deny", 
-  "entry", "exit", "attendance", "attendance-update"
-]
+        // General actions
+        "scan", "register", "deny", "edit", "delete", "login", "logout",
 
+        // Subject-related
+        "assign-subject", "unassign-subject", "subject-create", "subject-fetch",
+
+        // UID-related
+        "uid-fetch", "uid-capture",
+
+        // Student-related
+        "student-fetch", "student-lookup", "student-update", "student-delete",
+        "student-create", "student-assign", "student-unassign",
+        "student-verify", "student-verify-fail", "student-verify-success", "student-verify-deny",
+
+        // Attendance-related
+        "entry", "exit", "attendance", "attendance-update",
+
+        // ✅ Missing values used in routes
+        "log-fetch", "log-summary", "test-log"
+      ]
     },
     status: {
       type: String,
