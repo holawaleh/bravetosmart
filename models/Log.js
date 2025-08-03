@@ -13,6 +13,7 @@ const logSchema = new mongoose.Schema({
       "UID Lookup Failed",
       "Registration Denied",
       "Fetch Students", // ✅ Add this
+      "Fetch Subjects", // ✅ Add this
       "log-summary",     // ✅ if used elsewhere
     ]
   },
