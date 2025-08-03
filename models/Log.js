@@ -1,7 +1,16 @@
 const mongoose = require("mongoose");
 
 const logSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "Student", required: false },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Student", // Or "Admin" if it's from your auth system
+    required: false
+  },
+  student: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Student",
+    required: false
+  },
   action: {
     type: String,
     required: true,
@@ -14,11 +23,11 @@ const logSchema = new mongoose.Schema({
       "Registration Denied",
       "Fetch Students",
       "Fetch Subjects",
+      "entry",
+      "exit",
+      "log-fetch",
       "log-summary",
-      "log-fetch",     // ✅ now included
-      "test-log",      // ✅ now included
-      "entry",         // ✅ needed for summary counts
-      "exit"           // ✅ needed for summary counts
+      "test-log"
     ]
   },
   details: { type: String, required: true },
