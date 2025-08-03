@@ -23,7 +23,7 @@ router.get("/", authMiddleware, roleMiddleware(["admin", "superadmin"]), async (
       ip: req.headers["x-forwarded-for"] || req.connection.remoteAddress
     });
 
-    res.json(logs);
+    res.json({ success: true, data: logs }); // ✅ Consistent structure
   } catch (err) {
     await Log.create({
       user: req.user?.id,
@@ -33,7 +33,7 @@ router.get("/", authMiddleware, roleMiddleware(["admin", "superadmin"]), async (
       ip: req.headers["x-forwarded-for"] || req.connection.remoteAddress
     });
 
-    res.status(500).json({ message: "Failed to retrieve logs", error: err.message });
+    res.status(500).json({ success: false, message: "Failed to retrieve logs", error: err.message });
   }
 });
 
@@ -80,10 +80,13 @@ router.get("/summary", authMiddleware, roleMiddleware(["admin", "superadmin"]), 
     });
 
     res.json({
-      totalLogs,
-      entryCount,
-      exitCount,
-      logsPerStudent
+      success: true,
+      data: {
+        totalLogs,
+        entryCount,
+        exitCount,
+        logsPerStudent
+      }
     });
   } catch (err) {
     await Log.create({
@@ -94,7 +97,7 @@ router.get("/summary", authMiddleware, roleMiddleware(["admin", "superadmin"]), 
       ip: req.headers["x-forwarded-for"] || req.connection.remoteAddress
     });
 
-    res.status(500).json({ message: "Summary fetch failed", error: err.message });
+    res.status(500).json({ success: false, message: "Summary fetch failed", error: err.message });
   }
 });
 
@@ -109,12 +112,11 @@ router.post("/test", authMiddleware, async (req, res) => {
       ip: req.headers["x-forwarded-for"] || req.connection.remoteAddress
     });
 
-    res.status(201).json(log);
+    res.status(201).json({ success: true, data: log });
   } catch (err) {
     console.error("Log creation error:", err.message);
-    res.status(500).json({ message: "Failed to create test log", error: err.message });
+    res.status(500).json({ success: false, message: "Failed to create test log", error: err.message });
   }
 });
-
 
 module.exports = router;
