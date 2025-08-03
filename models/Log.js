@@ -12,14 +12,22 @@ const logSchema = new mongoose.Schema({
       "UID Lookup Success",
       "UID Lookup Failed",
       "Registration Denied",
-      "Fetch Students", // ✅ Add this
-      "Fetch Subjects", // ✅ Add this
-      "log-summary",     // ✅ if used elsewhere
+      "Fetch Students",
+      "Fetch Subjects",
+      "log-summary",
+      "log-fetch",     // ✅ now included
+      "test-log",      // ✅ now included
+      "entry",         // ✅ needed for summary counts
+      "exit"           // ✅ needed for summary counts
     ]
   },
   details: { type: String, required: true },
-  status: { type: String }, // optional, add enum if needed
-  ip: { type: String }      // optional
+  status: {
+    type: String,
+    enum: ["success", "failed"],
+    required: false
+  },
+  ip: { type: String }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Log", logSchema);
