@@ -19,7 +19,7 @@ app.use("/api/subjects", require("./routes/SubjectRoutes"));
 app.use("/api/logs", require("./routes/logRoutes"));
 
 // ✅ Mount student routes directly under /api
-app.use("/api", require("./routes/studentRoutes")); // All student endpoints live under /api
+app.use("/api/students", require("./routes/studentRoutes")); // All student endpoints live under /api
 
 // Root route
 app.get("/", (req, res) => {
