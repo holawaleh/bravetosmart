@@ -127,9 +127,11 @@ router.get("/", async (req, res) => {
 
     res.json(students);
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ Error in GET /api/students:", err.message, err.stack);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
+
 
 router.get("/test", (req, res) => {
   res.json({ message: "Test route working!" });
