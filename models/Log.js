@@ -1,9 +1,7 @@
-const mongoose = require("mongoose");
-
 const logSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Student", // Or "Admin" if it's from your auth system
+    ref: "Student", // Or "Admin"
     required: false
   },
   student: {
@@ -27,7 +25,10 @@ const logSchema = new mongoose.Schema({
       "exit",
       "log-fetch",
       "log-summary",
-      "test-log"
+      "test-log",
+      "login",              // ✅ Add this
+      "Admin Registered",   // ✅ Optional
+      "Admin Deleted"       // ✅ Optional
     ]
   },
   details: { type: String, required: true },
@@ -38,5 +39,3 @@ const logSchema = new mongoose.Schema({
   },
   ip: { type: String }
 }, { timestamps: true });
-
-module.exports = mongoose.model("Log", logSchema);
