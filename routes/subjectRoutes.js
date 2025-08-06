@@ -3,7 +3,7 @@ const router = express.Router();
 const Subject = require("../models/Subject");
 const Log = require("../models/Log");
 
-// ✅ GET all subjects
+// GET all subjects
 router.get("/", async (req, res) => {
   try {
     const subjects = await Subject.find().sort({ createdAt: -1 });
@@ -20,7 +20,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ POST /api/subjects/create - Add a new subject
+// ✅ POST /api/subjects/create
 router.post("/create", async (req, res) => {
   try {
     const { name, code } = req.body;
@@ -29,22 +29,22 @@ router.post("/create", async (req, res) => {
       return res.status(400).json({ message: "Name and code are required" });
     }
 
-    const existing = await Subject.findOne({ code });
+    const existing = await Subject.findOne({ $or: [{ name }, { code }] });
     if (existing) {
-      return res.status(409).json({ message: "Subject code already exists" });
+      return res.status(400).json({ message: "Subject already exists" });
     }
 
     const subject = await Subject.create({ name, code });
 
     await Log.create({
       action: "Create Subject",
-      details: `Created subject with name: ${name}, code: ${code}`,
+      details: `Created subject: ${name} (${code})`,
     });
 
-    res.status(201).json({ message: "Subject created", subject });
+    res.status(201).json({ message: "Subject created successfully", subject });
   } catch (err) {
     console.error("❌ Error creating subject:", err.message, err.stack);
-    res.status(500).json({ message: "Error creating subject", error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
