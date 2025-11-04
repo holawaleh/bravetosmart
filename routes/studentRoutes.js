@@ -120,10 +120,24 @@ router.get("/:id", async (req, res) => {
 // Update student
 router.put("/:id", async (req, res) => {
   try {
+    // Validate MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid student ID format" });
+    }
+
+    const updateData = {};
     const { name, matricNo, email, level, phone, department } = req.body;
-    
+
+    // Only include fields that are actually provided
+    if (name) updateData.name = name.trim();
+    if (matricNo) updateData.matricNo = matricNo.trim();
+    if (email) updateData.email = email.trim();
+    if (level) updateData.level = level.trim();
+    if (phone) updateData.phone = phone.trim();
+    if (department) updateData.department = department.trim();
+
     // Validate required fields
-    if (!name || !matricNo || !email) {
+    if (!updateData.name || !updateData.matricNo || !updateData.email) {
       return res.status(400).json({
         message: "Name, matricNo, and email are required fields"
       });
@@ -136,29 +150,30 @@ router.put("/:id", async (req, res) => {
     }
 
     // Check if matricNo or email already exists for another student
-    const exists = await Student.findOne({
+    const duplicateCheck = await Student.findOne({
       _id: { $ne: req.params.id },
-      $or: [{ matricNo }, { email }]
+      $or: [
+        { matricNo: updateData.matricNo },
+        { email: updateData.email }
+      ]
     });
 
-    if (exists) {
-      return res.status(400).json({ 
-        message: "Another student already exists with same matricNo or email" 
+    if (duplicateCheck) {
+      const duplicateField = duplicateCheck.matricNo === updateData.matricNo ? 'matricNo' : 'email';
+      return res.status(400).json({
+        message: `Another student already exists with this ${duplicateField}`
       });
     }
 
     // Update student with validated fields
     const student = await Student.findByIdAndUpdate(
       req.params.id,
+      { $set: updateData },
       { 
-        name: name.trim(),
-        matricNo: matricNo.trim(),
-        email: email.trim(),
-        level: level || existingStudent.level,
-        phone: phone || existingStudent.phone,
-        department: department || existingStudent.department,
-      },
-      { new: true, runValidators: true }
+        new: true,           // return updated doc
+        runValidators: true, // run schema validations
+        context: 'query'     // needed for unique validator
+      }
     );
 
     if (!student) {
@@ -173,8 +188,30 @@ router.put("/:id", async (req, res) => {
 
     res.json({ message: "Student updated successfully", student });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error updating student" });
+    console.error('Student update error:', err);
+    
+    // Handle mongoose validation errors
+    if (err.name === 'ValidationError') {
+      const messages = Object.values(err.errors).map(e => e.message);
+      return res.status(400).json({ 
+        message: 'Validation error', 
+        errors: messages 
+      });
+    }
+
+    // Handle duplicate key errors
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyPattern)[0];
+      return res.status(400).json({ 
+        message: `A student with this ${field} already exists` 
+      });
+    }
+
+    // Handle other errors
+    res.status(500).json({ 
+      message: "Server error updating student",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
