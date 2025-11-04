@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require('mongoose');
 const Student = require("../models/Student");
 const Log = require("../models/Log"); // ⬅️ Import Log model
 
