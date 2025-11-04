@@ -20,6 +20,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/students", require("./routes/studentRoutes"));
 app.use("/api/subjects", require("./routes/subjectRoutes")); // ✅ Subjects logic is handled in this file
 app.use("/api/logs", require("./routes/logRoutes"));
+app.use("/api/departments", require("./routes/departmentRoutes"));
 
 // Root route
 app.get("/", (req, res) => {
