@@ -47,13 +47,16 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // ✅ Log login event
-    await Log.create({
+    // ✅ Log login event (non-blocking) - do not await to avoid delaying response
+    Log.create({
       user: user._id,
       action: "login",
       details: `User '${user.username}' logged in`
+    }).catch((logErr) => {
+      console.error('Failed to write login log:', logErr?.message || logErr);
     });
 
+    // Respond immediately to reduce login latency
     res.json({
       token,
       user: {
