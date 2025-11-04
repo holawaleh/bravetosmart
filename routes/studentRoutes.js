@@ -92,6 +92,92 @@ router.post("/register", async (req, res) => {
 });
 
 // 🔍 Optional: Get student by UID
+// Get all students
+router.get("/", async (req, res) => {
+  try {
+    const students = await Student.find().sort({ createdAt: -1 });
+    res.json(students);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error getting students list" });
+  }
+});
+
+// Get student by ID
+router.get("/:id", async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+    res.json(student);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error getting student" });
+  }
+});
+
+// Update student
+router.put("/:id", async (req, res) => {
+  try {
+    const { name, matricNo, email, level, phone, department } = req.body;
+    
+    // Check if matricNo or email already exists for another student
+    const exists = await Student.findOne({
+      _id: { $ne: req.params.id },
+      $or: [{ matricNo }, { email }]
+    });
+
+    if (exists) {
+      return res.status(400).json({ 
+        message: "Another student already exists with same matricNo or email" 
+      });
+    }
+
+    const student = await Student.findByIdAndUpdate(
+      req.params.id,
+      { name, matricNo, email, level, phone, department },
+      { new: true }
+    );
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    await Log.create({
+      user: student._id,
+      action: "Student Updated",
+      details: `Student updated: ${student.name} (${student.matricNo})`,
+    });
+
+    res.json({ message: "Student updated successfully", student });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error updating student" });
+  }
+});
+
+// Delete student
+router.delete("/:id", async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    await Log.create({
+      action: "Student Deleted",
+      details: `Student deleted: ${student.name} (${student.matricNo})`,
+    });
+
+    await Student.findByIdAndDelete(req.params.id);
+    res.json({ message: "Student deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error deleting student" });
+  }
+});
+
 router.get("/uid/:uid", async (req, res) => {
   try {
     const student = await Student.findOne({ uid: req.params.uid });
