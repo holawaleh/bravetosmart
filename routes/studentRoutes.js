@@ -122,6 +122,19 @@ router.put("/:id", async (req, res) => {
   try {
     const { name, matricNo, email, level, phone, department } = req.body;
     
+    // Validate required fields
+    if (!name || !matricNo || !email) {
+      return res.status(400).json({
+        message: "Name, matricNo, and email are required fields"
+      });
+    }
+
+    // Check if student exists first
+    const existingStudent = await Student.findById(req.params.id);
+    if (!existingStudent) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
     // Check if matricNo or email already exists for another student
     const exists = await Student.findOne({
       _id: { $ne: req.params.id },
@@ -134,10 +147,18 @@ router.put("/:id", async (req, res) => {
       });
     }
 
+    // Update student with validated fields
     const student = await Student.findByIdAndUpdate(
       req.params.id,
-      { name, matricNo, email, level, phone, department },
-      { new: true }
+      { 
+        name: name.trim(),
+        matricNo: matricNo.trim(),
+        email: email.trim(),
+        level: level || existingStudent.level,
+        phone: phone || existingStudent.phone,
+        department: department || existingStudent.department,
+      },
+      { new: true, runValidators: true }
     );
 
     if (!student) {
